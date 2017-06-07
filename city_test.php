@@ -4,7 +4,7 @@ require 'autoload.php';
 use \City\City;
 use \City\City\Mapper;
 
-//$city = new City(1,'maincity',70,80);
+$city = new City(1,'maincity',70,80);
 //Mapper::create($city);
 //var_dump($city);
 //var_dump(Mapper::findById(1));
