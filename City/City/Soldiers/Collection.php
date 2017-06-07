@@ -1,10 +1,9 @@
 <?php
-namespace City\City\Soldier;
+namespace City\City\Soldiers;
 
-use City\City\Soldier\Soldiers;
-use City\City\Soldier\Batch;
+use City\City\Soldiers;
 
-class SoldiersCollection
+class Collection
 {
     private $_soldiers = array();
     private $_trainingBatch;

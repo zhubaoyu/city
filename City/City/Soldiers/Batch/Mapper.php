@@ -1,7 +1,7 @@
 <?php
-namespace City\City\Soldier\Batch;
+namespace City\City\Soldiers\Batch;
 
-use City\City\Soldier\Batch; 
+use City\City\Soldiers\Batch; 
 use City\Db\CatchedAdapter;
 
 class Mapper
