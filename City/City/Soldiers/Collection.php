@@ -51,21 +51,21 @@ class Collection
     {
         $this->_trainedBatches[] = $batch;
 
+        $index = $this->find($batch->getSoldierType());
+        if ($index>=0) {
+            $this->_soldiers[$index]->addNum($batch->getNum());
+            $this->_soldiers[$index]->setTimeAtLastEating($batch->getTimeAtFinished());
+            return;
+        }
+        $this->_accept($batch);
+    }
+
+    private function _accept(Batch $batch) 
+    {
         $soldiers = new Soldiers($batch->getCityId(),
             $batch->getSoldierType(),
             $batch->getNum(),
             $batch->getTimeAtFinished());
-        $this->_accept($soldiers);
-    }
-
-    private function _accept(Soldiers $soldiers) 
-    {
-        $index = $this->find($soldiers->getSoldierType());
-        if ($index>=0) {
-            $this->_soldiers[$index]->addNum($soldiers->getNum());
-            $this->_soldiers[$index]->setTimeAtLastEating($soldiers->getTimeAtLastEating());
-            return;
-        }
         $this->_soldiers[] = $soldiers;
     }
 
