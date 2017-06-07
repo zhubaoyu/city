@@ -570,20 +570,20 @@ class City
         return $this->getPopulation()>$this->getTaxRate()*self::POP_FLUC
             ? true : false; 
     }
-    
+
     private function _getFlucPop($rate)
     {
         $fluctuate = round($this->getPopulation() * $rate); 
         return $fluctuate >= self::POP_FLUC_MIN 
             ? $fluctuate : self::POP_FLUC_MIN;
     }
-    
+
     private function _fluctuateSoldiers()
     {
         if ($this->getFood() > 0) {
             return; 
         }
-        
+
         $this->soldiers()->fluctuate();
     }
 
@@ -595,7 +595,7 @@ class City
             $this->_fluctuateSoldiers();
         }
     }
-    
+
     public function develop($time = null)
     {
 //      var_dump(debug_backtrace()[1]['function']);
@@ -605,11 +605,9 @@ class City
         $this->produceFood($time);
         $this->consumeFood($time);
 
-        if (!$this->hasMoreTax($time)) {
-            return; 
-        } 
-
-        $this->collectTax($time);
+        if ($this->hasMoreTax($time)) {
+            $this->collectTax($time);
+        }
     }
 
     public function soldiers()
