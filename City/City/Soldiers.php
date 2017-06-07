@@ -1,5 +1,6 @@
 <?php
 namespace City\City;
+use City\City\Soldiers\Batch;
 
 class Soldiers
 {

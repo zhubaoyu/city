@@ -1,10 +1,10 @@
 <?php
 namespace City;
 
-use City\City\Soldier\Soldiers\Mapper as SoldiersDB;
-use City\City\Soldier\SoldiersCollection;
-use City\City\Soldier\TrainingStrategy;
-use City\City\Soldier\Batch;
+use City\City\Soldiers\Mapper as SoldiersDB;
+use City\City\Soldiers\Collection as SoldiersCollection;
+use City\City\Soldiers\TrainingStrategy;
+use City\City\Soldiers\Batch;
 
 class CityException extends \Exception
 {
