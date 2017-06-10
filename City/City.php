@@ -508,7 +508,7 @@ class City
             return 0;
         }
         return round($this->getFoodProductionRate() 
-        * ($time - $this->getTimeAtLastFood()));        
+            * ($time - $this->getTimeAtLastFood()));        
     }
 
     public function produceFood($time)

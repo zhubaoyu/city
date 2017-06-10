@@ -189,6 +189,7 @@ class Player
 
     public function saveCity(City $city)
     {
+        $city->soldiers()->save();
         return City\Mapper::update($city); 
     }
 
