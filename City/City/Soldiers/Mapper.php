@@ -1,11 +1,13 @@
 <?php
 namespace City\City\Soldiers;
 
-use City\City\Soldiers;
-use City\DB\CatchedAdapter;
+use \City\City\Soldiers;
+use \City\DB\CatchedAdapter;
 
 class Mapper
 {
+    use \City\Time;
+
     public function create(Soldiers $soldiers)
     {
         $sql = 'INSERT INTO soldiers(city_id,soldier_type,num,time_at_last_eating)'
@@ -14,7 +16,7 @@ class Mapper
             ':city_id' => $soldiers->getCityId(),
             ':soldier_type' => $soldiers->getSoldierType(),
             ':num' => $soldiers->getNum(),
-            ':time_at_last_eating' => $soldiers->getTimeAtLastEatingString(),
+            ':time_at_last_eating' => self::toDateTimeString($soldiers->getTimeAtLastEating()),
         );
         $ret = CatchedAdapter::create($sql, $data);
         if (false === $ret) {
@@ -54,7 +56,7 @@ class Mapper
         . ' WHERE id =:id'; 
         $data = array(
             ':num' => $soldiers->getNum(),
-            ':time_at_last_eating' => $soldiers->getTimeAtLastEatingString(),
+            ':time_at_last_eating' => self::toDateTimeString($soldiers->getTimeAtLastEating()),
             ':id' => $soldiers->getId(),
         );
 

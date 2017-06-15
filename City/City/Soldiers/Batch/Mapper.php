@@ -1,11 +1,13 @@
 <?php
 namespace City\City\Soldiers\Batch;
 
-use City\City\Soldiers\Batch; 
-use City\Db\CatchedAdapter;
+use \City\City\Soldiers\Batch; 
+use \City\Db\CatchedAdapter;
 
 class Mapper
 {
+    use \City\Time;
+
     public static function create(Batch $batch)
     {
         $sql = 'INSERT INTO soldier_batch(city_id,soldier_type,'
@@ -17,11 +19,11 @@ class Mapper
             ':soldier_type' => $batch->getSoldierType(),
             ':num' => $batch->getNum(),     
             ':state' => $batch->getState(),
-            ':time_at_creation' => $batch->getTimeAtCreationString(),
+            ':time_at_creation' => self::toDateTimeString($batch->getTimeAtCreation()),
             ':time_at_training' =>'',
         );
         if (Batch::STATE_TRAINING == $batch->getState()) {
-            $data[':time_at_training'] = $batch->getTimeAtTrainingString();
+            $data[':time_at_training'] = self::toDateTimeString($batch->getTimeAtTraining());
         }
         $ret = CatchedAdapter::create($sql, $data);
         if (false === $ret) {
@@ -40,7 +42,7 @@ class Mapper
             .'time_at_training=:time_at_training  WHERE id=:id';    
         $info = array(
             ':state' => $batch->getState(), 
-            ':time_at_training' => $batch->getTimeAtTrainingString(),
+            ':time_at_training' => self::toDateTimeString($batch->getTimeAtTraining()),
             ':id' => $batch->getId(),
         );
         return CatchedAdapter::update($sql, $info);

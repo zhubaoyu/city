@@ -1,6 +1,6 @@
 <?php
 namespace City\City;
-use City\City\Soldiers\Batch;
+use \City\City\Soldiers\Batch;
 
 class Soldiers
 {
@@ -87,11 +87,6 @@ class Soldiers
         return $this->_timeAtLastEating;    
     }
 
-    public function getTimeAtLastEatingString()
-    {
-        return date('Y-m-d H:i:s', $this->_timeAtLastEating);   
-    }
-
     public function setTimeAtLastEating($timeAtLastEating)
     {
         $this->_timeAtLastEating = $timeAtLastEating;   
@@ -142,7 +137,7 @@ class Soldiers
         if ($decreased < self::SOLDIER_DECREASE_MIN) {
             $decreased = self::SOLDIER_DECREASE_MIN;
         }
-        
+
         return $decreased;
     }
 

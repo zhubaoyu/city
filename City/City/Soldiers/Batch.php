@@ -75,11 +75,6 @@ class Batch
         return $this->_timeAtCreation;  
     }
 
-    public function getTimeAtCreationString()
-    {
-        return date('Y-m-d H:i:s', $this->_timeAtCreation); 
-    }
-
     public function setTimeAtTraining($timeAtTraining)
     {
         $this->_timeAtTraining = $timeAtTraining;   
@@ -89,15 +84,6 @@ class Batch
     public function getTimeAtTraining()
     {
         return $this->_timeAtTraining;  
-    }
-
-    public function getTimeAtTrainingString()
-    {
-        if ($this->_timeAtTraining) {
-            return date('Y-m-d H:i:s', $this->_timeAtTraining); 
-        } else {
-            return '00-00-00 00:00:00'; 
-        }
     }
 
     public function getTimeAtFinished()
@@ -114,12 +100,12 @@ class Batch
     {
         $this->_id = $id;   
     }
-    
+
     public function needSave()
     {
         return $this->_needSave;
     }
-    
+
     public function getTimeCost() 
     {
         return $this->getNum() * $this->_getTimeCostPerSoldier();
@@ -138,7 +124,7 @@ class Batch
 
     public function getGoldCost()
     {
-        return $this->getNum() * $this->_getGoldCostPerSoldier();   
+        return $this->getNum() * $this->_getGoldCostPerSoldier();
     }
 
     private function _getGoldCostPerSoldier()

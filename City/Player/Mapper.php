@@ -1,8 +1,8 @@
 <?php
 namespace City\Player;
 
-use City\DB\CatchedAdapter;
-use City\Player;
+use \City\DB\CatchedAdapter;
+use \City\Player;
 
 class Mapper
 {

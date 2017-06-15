@@ -1,7 +1,7 @@
 <?php
 namespace City\City\Soldiers;
 
-use City\City\Soldiers;
+use \City\City\Soldiers;
 
 class Collection
 {

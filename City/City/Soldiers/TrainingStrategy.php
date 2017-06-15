@@ -1,7 +1,7 @@
 <?php
 namespace City\City\Soldiers;
 
-use City\City;
+use \City\City;
 
 class TrainingStrategy
 {
@@ -23,7 +23,7 @@ class TrainingStrategy
         $this->_city = $city;           
     }   
 
-    public function createSoldierBatch($num, $soldierType)
+    public function createSoldiers($num, $soldierType)
     {   
         if ($num <= 0) {
             return self::BATCH_CREATE_FAIL_INVALID_NUM; 
@@ -69,7 +69,7 @@ class TrainingStrategy
         return self::BATCH_CREATE_SUCCESS;
     } 
 
-    public function cancelSoldierBatch($qIndex, $batchId)
+    public function cancelSoldiers($qIndex, $batchId)
     {
         $batches = $this->_city->soldiers()->getBatches();
         if (empty($batches) || !$batches->offsetExists($qIndex)) {

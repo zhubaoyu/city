@@ -1,10 +1,10 @@
 <?php
 namespace City;
 
-use City\City\Soldiers\Mapper as SoldiersDB;
-use City\City\Soldiers\Collection as SoldiersCollection;
-use City\City\Soldiers\TrainingStrategy;
-use City\City\Soldiers\Batch;
+use \City\City\Soldiers\Mapper as SoldiersDB;
+use \City\City\Soldiers\Collection as SoldiersCollection;
+use \City\City\Soldiers\TrainingStrategy;
+use \City\City\Soldiers\Batch;
 
 class CityException extends \Exception
 {
@@ -423,11 +423,6 @@ class City
         return $this->_timeAtCreation;  
     }
 
-    public function getTimeAtCreationString()
-    {
-        return date('Y-m-d H:i:s',$this->_timeAtCreation);
-    }
-
     private function _setTimeAtCreation($timeAtCreation = null)
     {
         if (empty($timeAtCreation)) {
@@ -446,11 +441,6 @@ class City
     public function getTimeAtLastFood()
     {
         return $this->_timeAtLastFood;  
-    }
-
-    public function getTimeAtLastFoodString()
-    {
-        return date('Y-m-d H:i:s', $this->_timeAtLastFood); 
     }
 
     public function setTimeAtLastFood($timeAtLastFood = null)
@@ -472,11 +462,6 @@ class City
     public function getTimeAtLastTax()
     {
         return $this->_timeAtLastTax;   
-    }
-
-    public function getTimeAtLastTaxString()
-    {
-        return date('Y-m-d H:i:s', $this->_timeAtLastTax);  
     }
 
     public function setTimeAtLastTax($timeAtLastTax = null)
@@ -629,28 +614,28 @@ class City
         return $this->_soldierTrainingStrategy;
     }
 
-    public function createPikemenBatch($num) 
+    public function createPikemen($num) 
     {
         return $this->_getSoldierTrainingStrategy()
-            ->createSoldierBatch($num, Batch::PIKEMEN); 
+            ->createSoldiers($num, Batch::PIKEMEN); 
     }
 
-    public function createArcherBatch($num) 
+    public function createArcher($num) 
     {
         return $this->_getSoldierTrainingStrategy()
-            ->createSoldierBatch($num, Batch::ARCHER);  
+            ->createSoldiers($num, Batch::ARCHER);  
     } 
 
-    public function createCavalryBatch($num) 
+    public function createCavalry($num) 
     {
         return $this->_getSoldierTrainingStrategy()
-            ->createSoldierBatch($num, Batch::CAVALRY); 
+            ->createSoldiers($num, Batch::CAVALRY); 
     }
 
-    public function cancelSoldierBatch($qIndex, $batchId)
+    public function cancelSoldiers($qIndex, $batchId)
     {
         return $this->_getSoldierTrainingStrategy()
-            ->cancelSoldierBatch($qIndex, $batchId);        
+            ->cancelSoldiers($qIndex, $batchId);        
     }
 
     public function setNeedSave($needSave = true)

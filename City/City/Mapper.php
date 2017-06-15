@@ -7,6 +7,7 @@ use \City\City;
 
 class Mapper
 {
+    use \City\Time;
     private static $_fields = array(
         'player_id' => ':player_id',
         'name' => ':name',
@@ -40,9 +41,9 @@ class Mapper
             ':food' => $city->getFood(),
             ':gold' => $city->getGold(),
             ':population' => $city->getPopulation(),
-            ':time_at_creation' => $city->getTimeAtCreationString(),
-            ':time_at_last_food' => $city->getTimeAtLastFoodString(),
-            ':time_at_last_tax' => $city->getTimeAtLastTaxString(),
+            ':time_at_creation' => self::toDateTimeString($city->getTimeAtCreation()),
+            ':time_at_last_food' => self::toDateTimeString($city->getTimeAtLastFood()),
+            ':time_at_last_tax' => self::toDateTimeString($city->getTimeAtLastTax()),
         );
 
         
@@ -110,9 +111,9 @@ class Mapper
             ':food' => $city->getFood(),
             ':gold' => $city->getGold(),
             ':population' => $city->getPopulation(),
-            ':time_at_creation' => $city->getTimeAtCreationString(),
-            ':time_at_last_food' => $city->getTimeAtLastFoodString(),
-            ':time_at_last_tax' => $city->getTimeAtLastTaxString(),
+            ':time_at_creation' => self::toDateTimeString($city->getTimeAtCreation()),
+            ':time_at_last_food' => self::toDateTimeString($city->getTimeAtLastFood()),
+            ':time_at_last_tax' => self::toDateTimeString($city->getTimeAtLastTax()),
             ':id' => $city->getId(),
         );
     }
