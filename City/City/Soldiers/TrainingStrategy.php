@@ -94,13 +94,8 @@ class TrainingStrategy
         return self::BATCH_CANCEL_SUCCESS;
     }
 
-    public function trainSolders()
+    public function trainSolders(array $batches)
     {
-        $batches = Batch\Mapper::findByCityId($this->_city->getId());
-        if (empty($batches)) {
-            return;
-        }
-
         $timeAtStart = 
             ($batches[0]->getState() == Batch::STATE_TRAINING)
             ? $batches[0]->getTimeAtTraining()
@@ -109,7 +104,7 @@ class TrainingStrategy
         $this->_trainSoldiers($batches, $timeAtStart);
     }
 
-    private function _trainSoldiers($batches, $time)
+    private function _trainSoldiers(array $batches, $time)
     {
         $currentTime = time();
         $timeAtStart = $time;

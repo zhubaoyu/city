@@ -95,7 +95,9 @@ class Collection
             }
         }
 
-        Batch\Mapper::update($this->_trainingBatch);
+        if ($this->_trainingBatch) {
+            Batch\Mapper::update($this->_trainingBatch);
+        }
 
         foreach ($this->_trainedBatches as $batch) {
             Batch\Mapper::update($batch);

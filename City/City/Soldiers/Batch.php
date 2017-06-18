@@ -77,6 +77,7 @@ class Batch
 
     public function setTimeAtTraining($timeAtTraining)
     {
+        assert($timeAtTraining>0,"time must greater than 0");
         $this->_timeAtTraining = $timeAtTraining;   
         $this->_needSave = true;
     }

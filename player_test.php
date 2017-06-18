@@ -1,5 +1,7 @@
 <?php
 require 'autoload.php';
+//require 'assertion.php';
+
 use \City\Player;
 use \City\Player\Mapper;
 //$player = new Player('Lulu');

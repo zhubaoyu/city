@@ -22,6 +22,7 @@ class Soldiers
     public function __construct($cityId, $soldierType, $num, 
         $timeAtLastEating = null)
     {
+        assert($cityId>0,"city id:{$cityId} must greater than 0");
         $this->_cityId = $cityId;
         $this->_soldierType = $soldierType;
         $this->_num = $num;     
@@ -30,7 +31,7 @@ class Soldiers
         } else {
             $this->_timeAtLastEating = time();  
         }
-    }   
+    }
 
     public function getCityId()
     {

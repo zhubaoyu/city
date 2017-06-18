@@ -1,19 +1,6 @@
 <?php
 namespace City;
 
-class PlayerException extends \Exception 
-{
-    const PLAYER_ID_ERROR = 1;
-    const PLAYER_NAME_ERROR = 2;    
-    const PLAYER_CITY_COUNT_ERROR = 3;
-    const PLAYER_CITY_MAX_COUNT_ERROR = 4;
-    const CAPITAL_MORE_THAN_ONE_ERROR = 5;
-    const PLAYER_ID_NOT_MATCH_ERROR = 6;
-    const CITY_NOT_EXIST_ERROR = 7; 
-    const CITY_NOT_CAPITAL_ERROR = 8;
-    const CITY_NOT_REULAR_ERROR = 9;
-}
-
 class Player
 {
     const MAX_CITY_COUNT =10;
@@ -25,9 +12,10 @@ class Player
 
     public function __construct($name, $id = null)
     {
-        $this->_setName($name); 
+        assert(!empty($name),"player name must not be empty");
+        $this->_name = $name;
         if (!is_null($id)) {
-            $this->_setId($id);
+            $this->setId($id);
         }
     }
 
@@ -38,32 +26,14 @@ class Player
 
     public function setId($id)
     {
-        $this->_setId($id); 
+        assert($id>0,"player id:$id, must greater than 0");
+        $this->_id = $id;
     }
 
-    private function _setId($id)
-    {
-        if($id <= 0) {
-            throw new PlayerException("player id:$id, must greater than zero", 
-                    PlayerException::PLAYER_ID_ERROR);   
-        }
-
-        $this->_id = $id;       
-    }
 
     public function getName()
     {
-        return $this->_name;    
-    }
-
-    private function _setName($name)
-    {
-        if(empty($name)) {
-            throw new PlayerException("player name must not be empty", 
-                    PlayerException::PLAYER_NAME_ERROR); 
-        }
-
-        $this->_name = $name;   
+        return $this->_name;
     }
 
     public function getCityCount()
@@ -76,7 +46,7 @@ class Player
     {
         if (!empty($this->_cities)) {
             return $this->_cities;  
-        }   
+        }
 
         if (is_null($this->_id)) {
             return array(); 
@@ -87,100 +57,61 @@ class Player
 
     public function createCity($name, $x, $y, $type = City::REGULAR)
     {
-        if (self::MAX_CITY_COUNT == count($this->_cities)) {
-            throw new PlayerException("every player can't have more than " 
-                    . PlayerException::PLAYER_CITY_MAX_COUNT_ERROR);
+        if (self::MAX_CITY_COUNT == $this->getCityCount()) {
+            return false;
         }
         $city = new City($this->_id, $name, $x, $y, $type);
-        City\Mapper::create($city);
-        return $city;
+        return ($ret=City\Mapper::create($city)) ? $city : $ret;
     }
 
     public function createCapital($name, $x, $y)
     {
-        if ($this->getCapital()) {
-            throw new PlayerException(
-                "player:{$this->_id} already have a capital",
-                PlayerException::CAPITAL_MORE_THAN_ONE_ERROR);
-        }
-
-        return $this->createCity($name, $x, $y, City::CAPITAL);        
+        return !$this->getCapital()
+            ? $this->createCity($name, $x, $y, City::CAPITAL)
+            : null;
     }
 
     public function getCity($cityId) 
     {
-        $data = City\Mapper::findById($cityId); 
-        if (empty($data)) {
-            return $data;   
+        assert($cityId>0,"city id:{$cityId} must greater than 0");
+        if($data = City\Mapper::findById($cityId)) {
+            if ($data->getPlayerId()==$this->_id) {
+                return $data;
+            }
         }
-
-        if($data->getPlayerId() != $this->_id) {
-            throw new PlayerException(
-                "playerid:{$this->_id} does not match player".
-                " id:{$data->getPlayerId()} in city:{$this->getId()}",
-                PlayerException::PLAYER_ID_NOT_MATCH_ERROR);
-        }
-        
-        return $data;
     }
 
     public function getCapital()
     {
-        $data = City\Mapper::findByPlayerIdAndType($this->_id, City::CAPITAL);  
-        if (empty($data)) {
-            return $data;
+        if($data = City\Mapper::findByPlayerIdAndType($this->_id, City::CAPITAL)) {
+            $data = $data[0];
+            if($data->getPlayerId() == $this->_id) {
+                return $data;
+            }
         }
-        $data = $data[0];
-
-        if($data->getPlayerId() != $this->_id) {
-            throw new PlayerException(
-                "playerid:{$this->_id} does not match player".
-                " id:{$data->getPlayerId()} in city:{$this->getId()}",
-                PlayerException::PLAYER_ID_NOT_MATCH_ERROR);
-        }
-        
-        return $data;
     }
 
     public function changeCapital($oldId, $newId)
     {
+        assert($oldId>0&&$newId>0,"city id:{$oldId},{$newId} must greater than 0");
         $oldCapital = $this->getCity($oldId);
-        if (!$oldCapital) {
-            throw new PlayerException(
-                "city:{$oldCapital->getId()} doesn't exist",
-                PlayerException::CITY_NOT_EXIST_ERROR);
-        }
-        if ($oldCapital->getType() != City::CAPITAL) {
-            throw new PlayerException(
-                "city:{$oldCapital->getId()} isn't the captical",
-                PlayerException::CITY_NOT_CAPITAL_ERROR);
-        }
-        $oldCapital->setType(City::REGULAR);
-
         $newCapital = $this->getCity($newId);
-        if (!$newCapital) {
-            throw new PlayerException(
-                "city:{$newCapital->getId()} doesn't exist",
-                PlayerException::CITY_NOT_EXIST_ERROR);
+        if (!$oldCapital || !$newCapital) {
+            return false;
         }
 
-        if ($newCapital->getType() != City::REGULAR) {
-            throw new PlayerException(
-                "city:{$newCapital->getId()} isn't a regular",
-                PlayerException::CITY_NOT_REULAR_ERROR);
-        }
+        $oldCapital->setType(City::REGULAR);
         $newCapital->setType(City::CAPITAL);
         return City\Mapper::changeCapital($newCapital, $oldCapital);
     }
 
     public function changeCityTaxRate($cityId, $taxRate)
     {
+        assert($cityId>0,"city id:{$cityId} must greater than 0");
+        assert($taxRate>=0,"tax rate:{$taxRate} must greater than 0");
         $city = $this->getCity($cityId);
-        if ($city->getPlayerId() != $this->_id) {
-            throw new PlayerException(
-                "player id :{$this->_id} not match that in" .
-                "city:{$city->getPlayerId()}",
-                PLAYER_ID_NOT_MATCH_ERROR);
+        if($city->getPlayerId() != $this->_id) {
+            return false;
         }
 
         $city->setTaxRate($taxRate);
@@ -213,6 +144,7 @@ class Player
 
     public function getCityInfo($cityId)
     {
+        assert($cityId>0,"city id:{$cityId} must greater than 0");
         $city = $this->getCity($cityId);
         if (empty($city)) {
             return array(); 
@@ -238,8 +170,8 @@ class Player
                 'soldiersId' => $soldiers->getId(),
                 'type' => $soldiers->getSoldierType(),
                 'num'  => $soldiers->getNum(),
-            );  
-        }       
+            );
+        }
 
         return $info;
     }

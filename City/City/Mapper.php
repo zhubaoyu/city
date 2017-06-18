@@ -58,6 +58,7 @@ class Mapper
 
     public static function findById($id)
     {
+        assert($id>0,"city id:{$id} must greater than 0");
         $sql = 'SELECT * FROM city WHERE id=:id';   
         $info = array(':id' => $id);
         $data = CatchedAdapter::select($sql, $info);
@@ -67,15 +68,8 @@ class Mapper
         if(empty($data)) {
             return null;    
         }
-        $data = $data[0];
 
-        return new City($data['player_id'],$data['name']
-            , $data['coordinate_x'], $data['coordinate_y']
-            , $data['type'], $data['tax_rate']
-            , $data['food'], $data['gold'], $data['population']
-            , strtotime($data['time_at_creation'])
-            , strtotime($data['time_at_last_food'])
-            , strtotime($data['time_at_last_tax']), $data['id']);
+        return City::makeCity($data[0]);
     }
 
     public static function update(City $city)
@@ -142,6 +136,7 @@ class Mapper
 
     public static function findByPlayerId($playerId)
     {
+        assert($playerId>0,"player id:{$playerId} must greater than 0");
         $sql = 'SELECT * FROM city WHERE player_id=:player_id'; 
         $info = array(':player_id' => $playerId);
         $data = CatchedAdapter::select($sql, $info);
@@ -151,19 +146,15 @@ class Mapper
 
         $cities = array();
         foreach ($data as $d) {
-            $cities[] = new City($d['player_id'],$d['name']
-                , $d['coordinate_x'], $d['coordinate_y']
-                , $d['type'], $d['tax_rate']
-                , $d['food'], $d['gold'], $d['population']
-                , strtotime($d['time_at_creation'])
-                , strtotime($d['time_at_last_food'])
-                , strtotime($d['time_at_last_tax']), $d['id']);
+            $cities[] = City::makeCity($d);
         }
         return $cities;
     }
 
     public static function findByPlayerIdAndType($playerId, $type)
     {
+        assert($playerId>0,"player id:{$playerId} must greater than 0");
+        assert($type>0,"city type:{$type} must greater than 0");
         $sql = 'SELECT * FROM city WHERE player_id=:player_id'
             . ' AND type=:type';    
         $info = array(':player_id' => $playerId, ':type' => $type);
@@ -173,13 +164,7 @@ class Mapper
         }
         $cities = array();
         foreach ($data as $d) {
-            $cities[] = new City($d['player_id'],$d['name']
-                , $d['coordinate_x'], $d['coordinate_y']
-                , $d['type'], $d['tax_rate']
-                , $d['food'], $d['gold'], $d['population']
-                , strtotime($d['time_at_creation'])
-                , strtotime($d['time_at_last_food'])
-                , strtotime($d['time_at_last_tax']), $d['id']);
+            $cities[] = City::makeCity($d);
         }
         return $cities;
     }

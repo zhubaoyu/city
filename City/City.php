@@ -5,20 +5,7 @@ use \City\City\Soldiers\Mapper as SoldiersDB;
 use \City\City\Soldiers\Collection as SoldiersCollection;
 use \City\City\Soldiers\TrainingStrategy;
 use \City\City\Soldiers\Batch;
-
-class CityException extends \Exception
-{
-    const PLAYER_ID_ERROR = 1;
-    const COORDINATE_ERROR = 2;
-    const TYPE_ERROR = 3;
-    const TAX_RATE_ERROR = 4;
-    const POPULATION_ERROR = 5;
-    const FOOD_ERROR = 6;
-    const GOLD_ERROR = 7;
-    const CITY_ID_ERROR = 8;
-    const TIME_ERROR = 9;
-    const NEGATIVE_ERROR = 10;
-}
+use \City\City\Soldiers\Batch\Mapper as BatchMapper;
 
 class City
 {
@@ -38,14 +25,12 @@ class City
     const HOUR = 3600;
     const CAPITAL_FOOD_RATE = 10000;
     const REGULAR_FOOD_RATE = 1000;
-    
+
     const POP_INCR_RATE = 0.05;
     const POP_DECR_RATE = 0.05;
     const POP_FLUC_MIN = 1;
     const POP_FLUC = 1000;
 
-
-    
     private $_id;
     private $_playerId;
     private $_name;
@@ -56,37 +41,50 @@ class City
     private $_food;
     private $_gold;
     private $_population;
-    private $_timeAtCreation;   
+    private $_timeAtCreation;
     private $_timeAtLastTax;
-    private $_timeAtLastFood;       
+    private $_timeAtLastFood;
 
     private $_soldiers;
     private $_soldierTrainingStrategy;
     private $_needSave = false;
 
 
+    public static function makeCity($cityInfo)
+    {
+        $city = new City($cityInfo['player_id'],$cityInfo['name']
+            , $cityInfo['coordinate_x'], $cityInfo['coordinate_y']
+            , $cityInfo['type'], $cityInfo['tax_rate']
+            , $cityInfo['food'], $cityInfo['gold'], $cityInfo['population']
+            , strtotime($cityInfo['time_at_creation'])
+            , strtotime($cityInfo['time_at_last_food'])
+            , strtotime($cityInfo['time_at_last_tax']), $cityInfo['id']);
+        $city->setId($cityInfo['id']);
+        if($soldierBatches = BatchMapper::findByCityId($city->getId())) {
+            $city->trainSolders($soldierBatches);
+        }
+        $city->develop();
+
+        return $city;
+    }
+
     public function __construct($playerId, $name, $x, $y
     , $type = self::REGULAR, $taxRate = self::INIT_TAX_RATE
     , $food = self::INIT_FOOD, $gold = self::INIT_GOLD
     , $population = self::INIT_POPULATION, $timeAtCreation = null
-    , $timeAtLastFood = null, $timeAtLastTax = null, $id = null) 
+    , $timeAtLastFood = null, $timeAtLastTax = null)
     {
         $this->_setPlayerId($playerId);
         $this->_setName($name);
         $this->_setCoordinate($x, $y);
         $this->_setType($type);
         $this->_setTaxRate($taxRate);
-        $this->_setFood($food);
-        $this->_setGold($gold);
+        $this->setFood($food);
+        $this->setGold($gold);
         $this->_setPopulation($population);
         $this->_setTimeAtCreation($timeAtCreation); 
         $this->setTimeAtLastFood($timeAtLastFood);
         $this->setTimeAtLastTax($timeAtLastTax);
-        $this->_setId($id); 
-        if ($id>0) {
-            $this->_getSoldierTrainingStrategy()->trainSolders();
-            $this->develop();
-        }
     }
 
     public function getId()
@@ -96,36 +94,18 @@ class City
 
     public function setId($id)
     {
-        $this->_setId($id); 
-    }
-
-    private function _setId($id)
-    {
-        if (empty($id)) {
-            return; 
-        }
-            
-        if($id <= 0) {
-            throw new CityException(
-            "city id:$id, must greater than 0"
-            , CityException::CITY_ID_ERROR);    
-        }   
-
+        assert($id>0, "city id:{$id}, must greater than 0");
         $this->_id = $id;
     }
 
     public function getPlayerId()
     {
-        return $this->_playerId;    
+        return $this->_playerId;
     }
 
     private function _setPlayerId($playerId)
     {
-        if($playerId <= 0) {
-            throw new CityException("player id:$playerId, must greater than zero"
-            , CityException::PLAYER_ID_ERROR);  
-        }   
-
+        assert($playerId>0, "player id:$playerId, must greater than 0");
         $this->_playerId = $playerId;
     }
 
@@ -134,20 +114,11 @@ class City
         return $this->_name;    
     }
 
-    public function setName($name)
-    {
-        $this->_setName($name);
-        $this->_needSave = true;    
-    }
-
     private function _setName($name)
     {
-        if (empty($name)) {
-            throw new CityException("city name:$name, must not be empty" , 
-                CityException::PLAYER_ID_ERROR);
-        }
-
+        assert(!empty($name),"city name:{$name}, must not be empty");
         $this->_name = $name;
+        $this->_needSave = true;
     }
 
     public function getCoordinateX()
@@ -159,62 +130,44 @@ class City
     {
         return $this->_coordinateY; 
     }
-    
+
     private function _setCoordinate($x,$y) 
     {
-        if (!$this->isValidateCoordinate($x)) {
-            throw new CityException(
-            "city coordinate x:$x, must greater than or equal to " 
-            . self::COORDINATE_MIN 
-            . ", smallter than or equal to " 
-            . self::COORDINATE_MAX 
-            ,CityException::COORDINATE_ERROR);  
-        }   
-        if (!$this->isValidateCoordinate($y)) {
-            throw new CityException(
-            "city coordinate y:$y, must greater than or equal to "
-            . self::COORDINATE_MIN 
-            . ", smallter than or equal to " 
-            . self::COORDINATE_MAX 
-            ,CityException::COORDINATE_ERROR);  
-        }   
-        
+        assert($this->isValidateCoordinate($x) && $this->isValidateCoordinate($y),
+            "city coordinate{x:$y,y:$y}"
+            . ", must greater than or equal to " . self::COORDINATE_MIN
+            . ", smallter than or equal to " . self::COORDINATE_MAX);
         $this->_coordinateX = $x;
         $this->_coordinateY = $y;
     }
 
     public function isValidateCoordinate($coordinate) 
-    {   
+    {
         return $coordinate >= self::COORDINATE_MIN 
         && $coordinate <= self::COORDINATE_MAX;
     }
 
     public function getType()
     {
-        return $this->_type;    
+        return $this->_type;
     }
 
     public function setType($type)
     {
         $this->develop();
         $this->_setType($type);
-        $this->_needSave = true;    
     }
 
     private function _setType($type)
     {
-        if (!$this->isValidType($type)) {
-            throw new CityException(
-            "city must be a regular city or capital" 
-            ,CityException::TYPE_ERROR);    
-        }       
-
+        assert($this->isValidType($type),"city type:{$type} must be a regular city or capital");
         $this->_type = $type;
+        $this->_needSave = true;
     }
 
     public function isValidType($type)
     {
-        return $type == self::REGULAR || $type == self::CAPITAL;    
+        return $type == self::REGULAR || $type == self::CAPITAL;
     }
 
     public function getTaxRate()
@@ -224,198 +177,134 @@ class City
 
     public function setTaxRate($taxRate)
     {
-        $this->develop();   
+        $this->develop();
         $this->_setTaxRate($taxRate);
-        $this->_needSave = true;
     }
 
-    private function _setTaxRate($taxRate)
+    private function _setTaxRate($taxRate) 
     {
-        if ($taxRate < 0) {
-            throw new CityException(
-            "tax rate must greater than or equal to 0"
-            , CityException::TAX_RATE_ERROR);   
-        }       
-
+        assert($taxRate>=0,"tax rate must greater than or equal to 0");
         $this->_taxRate = $taxRate;
+        $this->_needSave = true;
     }
 
     public function increaseFood($num)
     {
-        
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
-
+        assert($num >=0,"num:{$num} must not be smaller than 0");
         $this->setFood($this->getFood() + $num);
     }
 
     public function decreaseFood($num)
     {
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
-
-        if ($num > $this->getFood()) {
-            $this->setFood(0);  
-        } else {
-            $this->setFood($this->getFood() - $num);    
-        }
+        assert($num >=0,"num:{$num} must not be smaller than 0");
+        $food = $this->getFood() - $num;
+        $food = $food >0 ? $food : 0;
+        $this->setFood($food);
     }
 
     public function getFood()
     {
-        return $this->_food;    
-    }       
-    
-    public function setFood($food)
-    {
-        $this->_setFood($food);
-        $this->_needSave = true;    
+        return $this->_food;
     }
 
-    private function _setFood($food)
+    public function setFood($food)
     {
-        if ($food < 0) {
-            throw new CityException(
-            "food must must greater than or equal to 0"
-            , CityException::FOOD_ERROR);   
-        }       
-
+        assert($food>=0,"food:{$food} must must greater than or equal to 0");
         $this->_food = $food;
+        $this->_needSave = true;    
     }
 
     public function increaseGold($num)
     {
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
-
+        assert($num>=0,"gold:{$num} must must greater than or equal to 0");
         $this->setGold($this->getGold() + $num);    
     }
 
     public function decreaseGold($num)
     {
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
-
-        if ($num > $this->getGold()) {
-            $this->setGold(0);  
-        } else {
-            $this->setGold($this->getGold() - $num);    
-        }   
+        assert($num>=0,"gold:{$num} must must greater than or equal to 0");
+        $gold = $this->getGold() - $num;
+        $gold = $gold>0 ? $gold : 0;
+        $this->setGold($gold);
     }
 
     public function getGold()
     {
-        return $this->_gold;    
+        return $this->_gold;
     }
 
     public function setGold($gold)
     {
-        $this->_setGold($gold);
+        assert($gold>=0,"gold:{$gold} must must greater than or equal to 0");
+        $this->_gold = $gold;
         $this->_needSave = true;    
-    }
-
-    private function _setGold($gold)
-    {
-        if ($gold < 0) {
-            throw new CityException(
-            "gold must must greater than or equal to 0"
-            , CityException::GOLD_ERROR);   
-        }       
-
-        $this->_gold = $gold;   
     }
 
     public function increasePopulation($num) 
     {
-//      var_dump(debug_backtrace()[1]['function']);
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
+        assert($num>=0,"population:{$num} must must greater than or equal to 0");
+        $this->setPopulation($this->_getIncreasedPopulation($num));
+    }
 
-        $this->setPopulation($this->getPopulation() + $num);
+    private function _getIncreasedPopulation($num)
+    {
+        $population = $this->getPopulation() + $num;
+        return $population < self::POPULATION_MAX
+            ? $population
+            : self::POPULATION_MAX;
     }
 
     private function _increasePopulation($num)
     {
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
-
-        $this->_setPopulation($this->getPopulation() + $num);
+        assert($num>=0,"population:{$num} must must greater than or equal to 0");
+        $this->_setPopulation($this->_getIncreasedPopulation($num));
     }
 
     public function decreasePopulation($num) 
     {
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
+        assert($num>=0,"population:{$num} must must greater than or equal to 0");
+        $this->setPopulation($this->_getDecreasedPopulation($num));
+    }
 
-        $this->setPopulation($this->getPopulation()-$num);
+    private function _getDecreasedPopulation($num)
+    {
+        $population = $this->getPopulation() - $num;
+        return $population > self::POPULATION_MIN
+            ? $population
+            : self::POPULATION_MIN;
     }
 
     private function _decreasePopulation($num)
     {
-        if ($num < 0) {
-            throw new CityException(
-                "num must not be smaller than 0",
-                CityException::NEGATIVE_ERROR); 
-        }
-
-        $this->_setPopulation($this->getPopulation()-$num);
+        assert($num>=0,"population:{$num} must must greater than or equal to 0");
+        $this->_setPopulation($this->_getDecreasedPopulation($num));
     }
-    
+
     public function getPopulation()
     {
         return $this->_population;  
     }
-    
+
     public function setPopulation($population)
     {
-        if (!$this->isValidPopulation($population)) {
-            throw new CityException(
-            "population must must greater than or equal to " 
-            . self::POPULATION_MIN 
-            . ", smaller than or equal to " 
-            .  self::POPULATION_MAX , CityException::GOLD_ERROR);
-        }
         $this->develop();
         $this->_setPopulation($population);
-        $this->_needSave = true;    
     }
 
     private function _setPopulation($population)
     {
-        if ($population > self::POPULATION_MAX) {
-            $population = self::POPULATION_MAX; 
-        }
-        if ($population < self::POPULATION_MIN) {
-            $population = self::POPULATION_MIN; 
-        }
+        assert($this->isValidPopulation($population),
+            "population:{$population}"
+            . ", must greater than or equal to " . self::POPULATION_MIN
+            . ", smallter than or equal to " . self::POPULATION_MAX);
 
         $this->_population = $population;
+        $this->_needSave = true;
     }
 
     public function isValidPopulation($population)
     {
-        return $population >= self::POPULATION_MIN && $population <= self::POPULATION_MAX;  
+        return $population >= self::POPULATION_MIN && $population <= self::POPULATION_MAX;
     }
 
     public function getTimeAtCreation()
@@ -429,12 +318,7 @@ class City
             $this->_timeAtCreation = time();
             return;
         }
-        if ($timeAtCreation <= 0) {
-            throw new CityException(
-            "format of time at creation:$timeAtCreation invalid"
-            , CityException::TIME_ERROR);   
-        }
-
+        assert($timeAtCreation >0,"format of time at creation:{$timeAtCreation} invalid");
         $this->_timeAtCreation = $timeAtCreation;   
     }
 
@@ -449,13 +333,7 @@ class City
             $this->_timeAtLastFood = $this->_timeAtCreation;    
             return;
         }
-
-        if ($timeAtLastFood <= 0) {
-            throw new CityException(
-            "format of time at last food:$timeAtLastFood invalid"
-            , CityException::TIME_ERROR);   
-        }
-
+        assert($timeAtLastFood >0,"format of time at creation:{$timeAtLastFood} invalid");
         $this->_timeAtLastFood = $timeAtLastFood;
     }
 
@@ -470,21 +348,15 @@ class City
             $this->_timeAtLastTax = $this->_timeAtCreation; 
             return;
         }
-
-        if ($timeAtLastTax <= 0) {
-            throw new CityException(
-            "format of time at last tax:$timeAtLastTax invalid"
-            , CityException::TIME_ERROR);   
-        }
-
+        assert($timeAtLastTax >0,"format of time at creation:{$timeAtLastTax} invalid");
         $this->_timeAtLastTax = $timeAtLastTax;
     }
-    
+
     public function getFoodProductionRate()
     {
         return self::CAPITAL == $this->getType() 
         ? (float)self::CAPITAL_FOOD_RATE / self::HOUR
-        : (float)self::REGULAR_FOOD_RATE / self::HOUR;  
+        : (float)self::REGULAR_FOOD_RATE / self::HOUR;
     }
 
     public function getProducedFood($time) 
@@ -492,8 +364,8 @@ class City
         if ($time < $this->getTimeAtLastFood()) {
             return 0;
         }
-        return round($this->getFoodProductionRate() 
-            * ($time - $this->getTimeAtLastFood()));        
+        return round($this->getFoodProductionRate()
+            * ($time - $this->getTimeAtLastFood()));
     }
 
     public function produceFood($time)
@@ -595,6 +467,11 @@ class City
         }
     }
 
+    public function trainSolders(array $soldierBatches)
+    {
+        $this->_getSoldierTrainingStrategy()->trainSolders($soldierBatches);
+    }
+
     public function soldiers()
     {
         if (empty($this->_soldiers)) {
@@ -635,16 +512,16 @@ class City
     public function cancelSoldiers($qIndex, $batchId)
     {
         return $this->_getSoldierTrainingStrategy()
-            ->cancelSoldiers($qIndex, $batchId);        
+            ->cancelSoldiers($qIndex, $batchId);
     }
 
     public function setNeedSave($needSave = true)
     {
-        $this->_needSave = $needSave ? true : false;    
+        $this->_needSave = $needSave ? true : false;
     }
 
     public function needSave()
     {
-        return $this->_needSave;    
+        return $this->_needSave;
     }
 }

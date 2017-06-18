@@ -8,7 +8,7 @@ class Mapper
 {
     public static function findById($id)
     {
-        
+        assert($id>0, "player id:{$id} must greater than 0");
         $sql = 'SELECT * FROM player WHERE id=:id';
         $info = array(':id' => $id);
         $data = CatchedAdapter::select($sql, $info);
