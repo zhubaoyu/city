@@ -1,7 +1,6 @@
 <?php
 namespace City;
 use \City\City\Soldiers\Collection as SoldiersCollection;
-use \City\City\Soldiers\TrainingStrategy;
 use \City\City\Soldiers\Batch;
 
 class City
@@ -195,7 +194,7 @@ class City
     {
         assert($food>=0,"food:{$food} must must greater than or equal to 0");
         $this->_food = $food;
-        $this->_needSave = true;    
+        $this->_needSave = true;
     }
 
     public function increaseGold($num)
