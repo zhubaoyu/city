@@ -1,11 +1,8 @@
 <?php
 namespace City;
-
-use \City\City\Soldiers\Mapper as SoldiersDB;
 use \City\City\Soldiers\Collection as SoldiersCollection;
 use \City\City\Soldiers\TrainingStrategy;
 use \City\City\Soldiers\Batch;
-use \City\City\Soldiers\Batch\Mapper as BatchMapper;
 
 class City
 {
@@ -46,26 +43,13 @@ class City
     private $_timeAtLastFood;
 
     private $_soldiers;
-    private $_soldierTrainingStrategy;
     private $_needSave = false;
 
-
-    public static function makeCity($cityInfo)
+    public static function buildCity($cityInfo)
     {
-        $city = new City($cityInfo['player_id'],$cityInfo['name']
-            , $cityInfo['coordinate_x'], $cityInfo['coordinate_y']
-            , $cityInfo['type'], $cityInfo['tax_rate']
-            , $cityInfo['food'], $cityInfo['gold'], $cityInfo['population']
-            , strtotime($cityInfo['time_at_creation'])
-            , strtotime($cityInfo['time_at_last_food'])
-            , strtotime($cityInfo['time_at_last_tax']), $cityInfo['id']);
-        $city->setId($cityInfo['id']);
-        if($soldierBatches = BatchMapper::findByCityId($city->getId())) {
-            $city->trainSolders($soldierBatches);
-        }
-        $city->develop();
-
-        return $city;
+        $builder = new City\Builder($cityInfo);
+        $builder->buildCity();
+        return $builder->getCity();
     }
 
     public function __construct($playerId, $name, $x, $y
@@ -89,7 +73,7 @@ class City
 
     public function getId()
     {
-        return $this->_id;  
+        return $this->_id;
     }
 
     public function setId($id)
@@ -111,7 +95,7 @@ class City
 
     public function getName()
     {
-        return $this->_name;    
+        return $this->_name;
     }
 
     private function _setName($name)
@@ -123,12 +107,12 @@ class City
 
     public function getCoordinateX()
     {
-        return $this->_coordinateX; 
+        return $this->_coordinateX;
     }
 
     public function getCoordinateY()
     {
-        return $this->_coordinateY; 
+        return $this->_coordinateY;
     }
 
     private function _setCoordinate($x,$y) 
@@ -330,7 +314,7 @@ class City
     public function setTimeAtLastFood($timeAtLastFood = null)
     {
         if (empty($timeAtLastFood)){
-            $this->_timeAtLastFood = $this->_timeAtCreation;    
+            $this->_timeAtLastFood = $this->_timeAtCreation;
             return;
         }
         assert($timeAtLastFood >0,"format of time at creation:{$timeAtLastFood} invalid");
@@ -339,7 +323,7 @@ class City
 
     public function getTimeAtLastTax()
     {
-        return $this->_timeAtLastTax;   
+        return $this->_timeAtLastTax;
     }
 
     public function setTimeAtLastTax($timeAtLastTax = null)
@@ -467,52 +451,38 @@ class City
         }
     }
 
-    public function trainSolders(array $soldierBatches)
-    {
-        $this->_getSoldierTrainingStrategy()->trainSolders($soldierBatches);
-    }
-
     public function soldiers()
     {
         if (empty($this->_soldiers)) {
-            $soldiers = SoldiersDB::findByCityId($this->getId());
-            $this->_soldiers = new SoldiersCollection($soldiers);
+            $this->_soldiers = new SoldiersCollection();
         }
 
         return $this->_soldiers;
     }
 
-    private function _getSoldierTrainingStrategy()
+    public function setSoldiers(SoldiersCollection $soldiers)
     {
-        if (!$this->_soldierTrainingStrategy) {
-            $this->_soldierTrainingStrategy = new TrainingStrategy($this);
-        }
-
-        return $this->_soldierTrainingStrategy;
+        $this->_soldiers = $soldiers;
     }
 
-    public function createPikemen($num) 
+    public function createPikemen($num)
     {
-        return $this->_getSoldierTrainingStrategy()
-            ->createSoldiers($num, Batch::PIKEMEN); 
+        return Batch::createSoldiers($this, $num, BATCH::PIKEMEN);
     }
 
-    public function createArcher($num) 
+    public function createArcher($num)
     {
-        return $this->_getSoldierTrainingStrategy()
-            ->createSoldiers($num, Batch::ARCHER);  
-    } 
+        return Batch::createSoldiers($this, $num, Batch::ARCHER);
+    }
 
     public function createCavalry($num) 
     {
-        return $this->_getSoldierTrainingStrategy()
-            ->createSoldiers($num, Batch::CAVALRY); 
+        return Batch::createSoldiers($this, $num, Batch::CAVALRY);
     }
 
     public function cancelSoldiers($qIndex, $batchId)
     {
-        return $this->_getSoldierTrainingStrategy()
-            ->cancelSoldiers($qIndex, $batchId);
+        return Batch::cancelSoldiers($this, $qIndex, $batchId);
     }
 
     public function setNeedSave($needSave = true)

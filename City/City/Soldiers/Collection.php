@@ -10,7 +10,7 @@ class Collection
     private $_trainedBatches = array();
     private $_batches;
 
-    public function __construct($soldiers)
+    public function __construct($soldiers = array())
     {
         $this->_soldiers = $soldiers;
         $this->_batches = new \SplQueue();
@@ -47,26 +47,26 @@ class Collection
         return -1;
     }
 
+    public function add(Soldiers $soldiers)
+    {
+        $index = $this->find($soldiers->getSoldierType());
+        if($index >=0) {
+            $this->_soldiers[$index]->addNum($soldiers->getNum());
+            $this->_soldiers[$index]->setTimeAtLastEating($soldiers->getTimeAtLastEating());
+            return ;
+        }
+        $this->_soldiers[] = $soldiers;
+    }
+
     public function accept(Batch $batch) 
     {
         $this->_trainedBatches[] = $batch;
 
-        $index = $this->find($batch->getSoldierType());
-        if ($index>=0) {
-            $this->_soldiers[$index]->addNum($batch->getNum());
-            $this->_soldiers[$index]->setTimeAtLastEating($batch->getTimeAtFinished());
-            return;
-        }
-        $this->_accept($batch);
-    }
-
-    private function _accept(Batch $batch) 
-    {
         $soldiers = new Soldiers($batch->getCityId(),
             $batch->getSoldierType(),
             $batch->getNum(),
             $batch->getTimeAtFinished());
-        $this->_soldiers[] = $soldiers;
+        $this->add($soldiers);
     }
 
     public function consumeFood($time) 
