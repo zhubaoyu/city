@@ -9,7 +9,20 @@ class Builder
 {
     private $_city;
 
-    public function __construct($cityInfo)
+    public static function build($cityInfo)
+    {
+        $builder = new self();
+        if($builder->buildCity($cityInfo)->getId()>0) {
+            $builder->buildSoldiers();
+            $builder->trainSoldiers();
+        }
+
+        $city = $builder->getCity();
+        $city->develop();
+        return $city;
+    }
+
+    public function buildCity($cityInfo)
     {
         $city = new City($cityInfo['player_id'],$cityInfo['name']
             , $cityInfo['coordinate_x'], $cityInfo['coordinate_y']
@@ -19,13 +32,19 @@ class Builder
             , strtotime($cityInfo['time_at_last_food'])
             , strtotime($cityInfo['time_at_last_tax']), $cityInfo['id']);
         $city->setId($cityInfo['id']);
-
         $this->_city = $city;
+
+        return $city;
     }
 
-    public function buildCity()
+    public function buildSoldiers()
     {
-        $this->_buildSoldiers();
+        $soldiers = Soldiers\Mapper::findByCityId($this->_city->getId());
+        $this->_city->setSoldiers(new Soldiers\Collection($soldiers));
+    }
+
+    public function trainSoldiers()
+    {
         if($batches = BatchMapper::findByCityId($this->_city->getId())) {
             $timeAtStart = 
                 ($batches[0]->getState() == Batch::STATE_TRAINING)
@@ -34,14 +53,6 @@ class Builder
 
             $this->_trainSoldiers($batches, $timeAtStart);
         }
-
-        $this->_city->develop();
-    }
-
-    private function _buildSoldiers()
-    {
-        $soldiers = Soldiers\Mapper::findByCityId($this->_city->getId());
-        $this->_city->setSoldiers(new Soldiers\Collection($soldiers));
     }
 
     private function _trainSoldiers(array $batches, $time)

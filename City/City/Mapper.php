@@ -69,7 +69,7 @@ class Mapper
             return null;    
         }
 
-        return City::buildCity($data[0]);
+        return Builder::build($data[0]);
     }
 
     public static function update(City $city)
@@ -146,7 +146,7 @@ class Mapper
 
         $cities = array();
         foreach ($data as $d) {
-            $cities[] = City::buildCity($d);
+            $cities[] = Builder::build($d);
         }
         return $cities;
     }
@@ -164,7 +164,7 @@ class Mapper
         }
         $cities = array();
         foreach ($data as $d) {
-            $cities[] = City::buildCity($d);
+            $cities[] = Builder::build($d);
         }
         return $cities;
     }

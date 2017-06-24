@@ -44,13 +44,6 @@ class City
     private $_soldiers;
     private $_needSave = false;
 
-    public static function buildCity($cityInfo)
-    {
-        $builder = new City\Builder($cityInfo);
-        $builder->buildCity();
-        return $builder->getCity();
-    }
-
     public function __construct($playerId, $name, $x, $y
     , $type = self::REGULAR, $taxRate = self::INIT_TAX_RATE
     , $food = self::INIT_FOOD, $gold = self::INIT_GOLD
